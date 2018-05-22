@@ -1,19 +1,19 @@
 <template>
     <div class="sidebar">
       <el-menu :default-active="$route.path"  class="el-menu-vertical" unique-opened  router>
-        <template v-for="bitem in billitem">
-          <template v-if="bitem.sublist">
-            <el-submenu  :index="bitem.index" :key="bitem.index">
-              <template slot="title"><i  :class="bitem.icon"></i>{{bitem.title}}</template>
-              <el-menu-item  v-for="(subitem,myindex) in bitem.sublist" :index="subitem.topath" :key="myindex"  >
-                {{subitem.title}}
+        <template v-for="i in item">
+          <template v-if="i.sublist">
+            <el-submenu  :index="i.index" :key="i.index">
+              <template slot="title"><i  :class="i.icon"></i>{{i.title}}</template>
+              <el-menu-item  v-for="(subItem, myIndex) in i.sublist" :index="subItem.toPath" :key="myIndex"  >
+                {{subItem.title}}
               </el-menu-item>
             </el-submenu>
           </template>
           <template v-else>
-            <el-menu-item :index="bitem.index" :key="bitem.index">
-              <i :class="bitem.icon"></i>
-              {{bitem.title}}
+            <el-menu-item :index="i.index" :key="i.index">
+              <i :class="i.icon"></i>
+              {{i.title}}
             </el-menu-item>
           </template>
         </template>
@@ -27,74 +27,36 @@ export default {
   name: '',
   data: function () {
     return {
-      billitem: [
+      item: [
         {
-          icon: 'el-icon-star-on',
-          index: 'sameday',
-          title: '天账单',
+          icon: 'el-icon-document',
+          index: 'office',
+          title: '办公设备',
           sublist: [
             {
-              topath: '/Dday',
-              title: '账单明细'
+              toPath: '/Asset',
+              title: '低值资产'
             },
             {
-              topath: '/Asset',
-              title: '账单总额'
+              toPath: '/Test',
+              title: '固定资产'
             }
           ]
         },
         {
-          icon: 'el-icon-upload',
-          index: 'ctyle',
-          title: '表单样式',
+          icon: 'el-icon-printer',
+          index: 'instrument',
+          title: '仪器仪表',
           sublist: [
             {
-              topath: '/Basicfrom',
-              title: '基本'
+              toPath: '/Basicfrom',
+              title: '低值资产'
             },
             {
-              topath: '/Upflie',
-              title: '文件上传'
+              toPath: '/Upflie',
+              title: '固定资产'
             }
           ]
-
-        },
-        {
-          icon: 'el-icon-setting',
-          index: 'chartstyle',
-          title: '图表样式',
-          sublist: [
-            {
-              topath: '/Ccurve',
-              title: '曲线图'
-            },
-            {
-              topath: '/Ccolumn',
-              title: '柱状图'
-            },
-            {
-              topath: '/Cpie',
-              title: '饼状图'
-            },
-            {
-              topath: '/Cannular',
-              title: '环形图'
-            },
-            {
-              topath: '/Cblend',
-              title: '地图'
-            }
-          ]
-        },
-        {
-          icon: 'el-icon-menu',
-          index: '/tableplugin',
-          title: '数据axios请求'
-        },
-        {
-          icon: 'el-icon-date',
-          index: '/drag',
-          title: '消费总结'
         }
       ]
     }

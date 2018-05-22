@@ -1,0 +1,12 @@
+ul.el-menu{
+  background-color: #eef1f6;
+}
+.el-menu-item:hover,.el-menu-item:focus, .el-submenu__title:focus, .el-submenu__title:hover,.el-submenu:hover,.is-active{
+  background-color: #D1DBFB;;
+}
+button.button_delete{
+  color: red;
+}
+.el-table th{
+  background-color: #eef1f6;
+}
