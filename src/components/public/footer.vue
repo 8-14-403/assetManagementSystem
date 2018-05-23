@@ -1,6 +1,6 @@
 <template>
   <div class="footer">
-    页脚信息
+    版权所有© 2018-2019 junkT团队
   </div>
 </template>
 
@@ -15,14 +15,15 @@ export default {
 
 <style scoped>
   .footer{
-    margin-top: 30px;
-    position: relative;
+    margin: 0px auto;
+    overflow: hidden;
+    position: absolute;
     bottom: 0;
-    left: 0;
     width: 100%;
-    height: 30px;
-    line-height: 30px;
+    height: 40px;
+    line-height: 40px;
     text-align: center;
+    color: #fff;
     background-color: #475669;
   }
 </style>

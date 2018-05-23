@@ -5,17 +5,20 @@
     <div class="content">
       <transition name="move" mode="out-in"><router-view></router-view></transition>
     </div>
+    <itemsfoot></itemsfoot>
   </div>
 </template>
 
 <script>
 import itemheader from '../../components/public/header'
 import itemsidebar from '../../components/public/sidebar'
+import itemsfoot from '../../components/public/footer'
 export default {
   name: 'app',
   components: {
     itemheader,
-    itemsidebar
+    itemsidebar,
+    itemsfoot
   }
 }
 </script>
