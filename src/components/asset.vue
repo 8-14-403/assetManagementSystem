@@ -40,9 +40,14 @@
           </el-table>
         </div>
         <div class="pager">
-          <el-pagination v-bind:current-Page="pageIndex" v-bind:page-size="pageSize" :total="total"
-                         layout="total,sizes,prev,pager,next,jumper" v-bind:page-sizes="pageSizes"
-                         v-on:size-change="sizeChange" v-on:current-change="pageIndexChange">
+          <el-pagination v-bind:current-page="pageIndex"
+                         :page-size="pageSize"
+                         :total="total"
+                         background
+                         layout="total,sizes,prev,pager,next,jumper"
+                         v-bind:page-sizes="pageSizes"
+                         v-on:size-change="sizeChange"
+                         v-on:current-change="pageIndexChange">
 
           </el-pagination>
         </div>
@@ -92,8 +97,8 @@
                 <el-input v-model="asset.comment"></el-input>
               </el-form-item>
               <el-form-item>
-                <el-button type="primary" v-on:click="save">确 定</el-button>
-                <el-button type="primary" v-on:click="cancel">取 消</el-button>
+                <el-button type="primary" v-on:click="save" icon="el-icon-circle-check-outline" size="small">确定</el-button>
+                <el-button type="primary" v-on:click="cancel" icon="el-icon-circle-close-outline" size="small">取消</el-button>
               </el-form-item>
             </el-form>
           </el-dialog>
@@ -124,7 +129,7 @@ export default {
       isAdd: false,
       rules: {
       },
-      pageIndex: 0,
+      pageIndex: 1,
       pageSize: 10,
       total: 0,
       pageSizes: [10, 20, 50, 100],
@@ -133,52 +138,21 @@ export default {
   },
   created: function () {
     this.initTable()
-    this.fetchData()
   },
   methods: {
     initTable: function () {
-      this.$http.get('http://localhost:8888/asset/getAll')
+      let currentPage = this.pageIndex -1
+      let size = this.pageSize
+      this.$http.get('http://localhost:8888/asset/getAll?page=' + currentPage + '&size=' + size)
         .then((response) => {
           if(response.body.code === 0) {
-            this.assets = response.body.data
+            this.assets = response.body.data.content
+            this.total = response.body.data.totalElements
+          } else {
+            this.$alert(response.body.message, '获取资产信息失败', { type: 'error'})
           }
         })
         .catch((response) => {
-          // 测试数据，后期移除
-          this.assets =  [
-            { 'id': '123456',
-              'assetType': '自己的',
-              'assetCode': '123',
-              'companyNumber': '123',
-              'deviceName': '电脑',
-              'model': '联想E480',
-              'country': '中国',
-              'manufacturer': '航天江南',
-              'factoryNumber': '123',
-              'department': '研发',
-              'user': 'caojy',
-              'originalValue': '0',
-              'project': '国产虚拟化',
-              'number': '2',
-              'comment': '使用中sssssssssssssssssssssssssssssssssssssssssssss~~'
-            },
-            { 'id': '123456',
-              'assetType': '自己的',
-              'assetCode': '123',
-              'companyNumber': '123',
-              'deviceName': '电脑',
-              'model': '联想E480',
-              'country': '中国',
-              'manufacturer': '航天江南',
-              'factoryNumber': '123',
-              'department': '研发',
-              'user': 'caojy',
-              'originalValue': '0',
-              'project': '国产虚拟化',
-              'number': '2',
-              'comment': '使用中sssssssssssssssssssssssssssssssssssssssssssss~~'
-            }
-          ]
           this.$alert(response.message, '请求失败', {type : 'error'})
         })
     },
@@ -288,8 +262,7 @@ export default {
           this.$http.delete('http://localhost:8888/asset/deleteAsset/' + id)
             .then(response => {
               if (response.body.code === 0) {
-                let index = this.assets.findIndex(x => x.id === id)
-                this.assets.splice(index, 1)
+                this.initTable()
                 this.$message({
                   message: '删除成功!',
                   type: 'success'
@@ -308,11 +281,11 @@ export default {
     },
     sizeChange: function (pageSize) {
       this.pageSize = pageSize
-      this.fetchData()
+      this.initTable()
     },
     pageIndexChange: function (pageIndex) {
       this.pageIndex = pageIndex
-      this.fetchData()
+      this.initTable()
     }
   }
 }

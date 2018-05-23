@@ -37,7 +37,7 @@ export default {
     left: 220px;
     right: 0;
     top:60px;
-    bottom: 0;
+    bottom: 40px;
     width: auto;
     padding: 20px;
     -webkit-box-sizing: border-box;
