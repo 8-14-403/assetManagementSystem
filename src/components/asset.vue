@@ -17,7 +17,7 @@
             <el-table-column type="selection" width="40"></el-table-column>
             <el-table-column align="center" label="序号" type="index" width="60"></el-table-column>
             <el-table-column prop="id" label="ID" v-if=false></el-table-column>
-            <el-table-column align="center" prop="assetType" label="资产类别"></el-table-column>
+            <el-table-column align="center" sortable prop="assetType" label="资产类别"></el-table-column>
             <el-table-column align="center" prop="assetCode" label="资产编号"></el-table-column>
             <el-table-column align="center" prop="companyNumber" label="单位编号"></el-table-column>
             <el-table-column align="center" prop="deviceName" label="设备名称" show-overflow-tooltip></el-table-column>
@@ -47,7 +47,7 @@
           </el-pagination>
         </div>
         <div>
-          <el-dialog v-bind:title="title" :visible.sync="showOperateManifest" v-on:close="dialogClosed">
+          <el-dialog v-bind:title="title" :visible.sync="showOperateManifest" v-on:close="dialogClosed" width="40%">
             <el-form v-bind:model="asset" v-bind:rules="rules" ref="assetForm" label-position="left" label-width="80px">
               <el-form-item label="资产类别" prop="assetsType">
                 <el-input v-model="asset.assetType"></el-input>
@@ -57,6 +57,9 @@
               </el-form-item>
               <el-form-item label="单位编号" prop="companyNumber">
                 <el-input v-model="asset.companyNumber"></el-input>
+              </el-form-item>
+              <el-form-item label="设备名称" prop="deviceName">
+                <el-input v-model="asset.deviceName"></el-input>
               </el-form-item>
               <el-form-item label="型号" prop="model">
                 <el-input v-model="asset.model"></el-input>
@@ -140,7 +143,7 @@ export default {
             this.assets = response.body.data
           }
         })
-        .catch( function (response) {
+        .catch((response) => {
           // 测试数据，后期移除
           this.assets =  [
             { 'id': '123456',
@@ -176,7 +179,7 @@ export default {
               'comment': '使用中sssssssssssssssssssssssssssssssssssssssssssss~~'
             }
           ]
-          alert('请求数据失败')
+          this.$alert(response.message, '请求失败', {type : 'error'})
         })
     },
     handleSelectionChange (val) {
@@ -194,10 +197,40 @@ export default {
       // 获取DOM元素，需document.querySelector（".input1"）获取这个dom节点，然后在获取input1的值。vue中就可以使用将ref绑定到元素上去。
       // 如果在普通的 DOM 元素上使用，引用指向的就是 DOM 元素; 如果用在子组件上，引用就指向组件实例:
       const _this = this
-      let operateManifest = JSON.parse(JSON.stringify(_this.asset)) // JSON.parse()是从字符串中解析出json对象   JSON.stringify()是从对象中解析出字符串
       if (_this.isAdd) {
-        _this.assets.push(operateManifest)
-        _this.showOperateManifest = false
+        let asset = _this.asset
+        _this.$http.post('http://localhost:8888/asset/saveAsset',{
+          'assetType': asset.assetType,
+          'assetCode': asset.assetCode,
+          'companyNumber': asset.companyNumber,
+          'deviceName': asset.deviceName,
+          'model': asset.model,
+          'country': asset.country,
+          'manufacturer': asset.manufacturer,
+          'factoryNumber': asset.factoryNumber,
+          'department': asset.department,
+          'user': asset.user,
+          'originalValue': asset.originalValue,
+          'project': asset.project,
+          'number': asset.number,
+          'comment': asset.comment
+        })
+          .then((response) => {
+            if (response.body.code === 0) {
+              _this.showOperateManifest = false
+              _this.$refs.assetForm.resetFields()
+              _this.initTable()
+              this.$message({
+                message: '保存成功!',
+                type: 'success'
+              })
+            } else {
+              this.$alert(response.body.message, '保存失败', { type: 'error'})
+            }
+          })
+          .catch((response) => {
+            this.$alert(response.message, '请求失败!', { type: 'error'})
+          })
         // bus.$emit("manifestChanged");
       } else {
         let asset = this.asset
@@ -224,12 +257,16 @@ export default {
               _this.showOperateManifest = false
               _this.$refs.assetForm.resetFields()
               _this.initTable()
+              this.$message({
+                message: '更新成功!',
+                type: 'success'
+              })
             } else {
-              alert('更新失败:' + response.body.message)
+              this.$alert(response.body.message, '更新失败!', { type: 'error'})
             }
           })
-          .catch(function (response) {
-            alert('请求错误')
+          .catch((response) => {
+            this.$alert(response.message, '请求失败', { type: 'error'})
           })
 
       }
@@ -245,21 +282,24 @@ export default {
       this.isAdd = false
       this.showOperateManifest = true
     },
-    del: function (ID) {
+    del: function (id) {
       this.$confirm('是否删除？', '警告', { type: 'warning' })
         .then(() => {
-          this.$http.delete('http://localhost:1500/api/assets/' + ID)
+          this.$http.delete('http://localhost:8888/asset/deleteAsset/' + id)
             .then(response => {
-              let index = this.assets.findIndex(x => x.ID === ID)
-              this.assets.splice(index, 1)
-              this.$message({
-                message: '删除成功',
-                type: 'success'
-              })
+              if (response.body.code === 0) {
+                let index = this.assets.findIndex(x => x.id === id)
+                this.assets.splice(index, 1)
+                this.$message({
+                  message: '删除成功!',
+                  type: 'success'
+                })
+              } else {
+                this.$alert(response.body.message, '删除失败', { type: 'error' })
+              }
             })
-            .catch(err => {
-              this.$alert(err.body.Message, '删除消费明细', { type: 'error' })
-              // console.log(err);
+            .catch((response) => {
+              this.$alert(response.message, '请求失败', { type: 'error' })
             })
         })
     },
