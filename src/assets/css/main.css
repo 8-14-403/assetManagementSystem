@@ -10,3 +10,7 @@ button.button_delete{
 .el-table th{
   background-color: #eef1f6;
 }
+a.el-upload-list__item-name{
+  text-align: left;
+  margin-left: 10%;
+}

@@ -10,26 +10,26 @@
         </div>
         <div class="table">
           <div align="right" style="line-height: 50px">
-            <el-button type="primary" size="small" v-on:click="fetchData" icon="el-icon-upload2">导入</el-button>
-            <el-button type="primary" size="small" v-on:click="fetchData" icon="el-icon-download">导出</el-button>
+            <el-button type="primary" size="small" v-on:click="importData" icon="el-icon-upload2">导入</el-button>
+            <el-button type="primary" size="small" v-on:click="exportExcel" icon="el-icon-download">导出</el-button>
           </div>
-          <el-table v-bind:data="assets" highlight-current-row stripe border height="500" style="width: 100%" @selection-change="handleSelectionChange">>
+          <el-table v-bind:data="assets" highlight-current-row stripe v-loading="loading" height="500" style="width: 100%" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="40"></el-table-column>
-            <el-table-column align="center" label="序号" type="index" width="60"></el-table-column>
+            <el-table-column prop="index" align="center" label="序号" type="index" width="60"></el-table-column>
             <el-table-column prop="id" label="ID" v-if=false></el-table-column>
-            <el-table-column align="center" sortable prop="assetType" label="资产类别"></el-table-column>
-            <el-table-column align="center" prop="assetCode" label="资产编号"></el-table-column>
-            <el-table-column align="center" prop="companyNumber" label="单位编号"></el-table-column>
+            <el-table-column align="center" sortable prop="assetType" label="资产类别" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="assetCode" label="资产编号" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="companyNumber" label="单位编号" show-overflow-tooltip></el-table-column>
             <el-table-column align="center" prop="deviceName" label="设备名称" show-overflow-tooltip></el-table-column>
-            <el-table-column align="center" prop="model" label="型号"></el-table-column>
-            <el-table-column align="center" prop="country" label="国别"></el-table-column>
-            <el-table-column align="center" prop="manufacturer" label="生产厂家"></el-table-column>
-            <el-table-column align="center" prop="factoryNumber" label="出厂编号"></el-table-column>
-            <el-table-column align="center" prop="department" label="使用部门"></el-table-column>
-            <el-table-column align="center" prop="user" label="使用人"></el-table-column>
-            <el-table-column align="center" prop="originalValue" label="资产原值"></el-table-column>
+            <el-table-column align="center" prop="model" label="型号" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="country" label="国别" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="manufacturer" label="生产厂家" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="factoryNumber" label="出厂编号" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="department" label="使用部门" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="user" label="使用人" show-overflow-tooltip></el-table-column>
+            <el-table-column align="center" prop="originalValue" label="资产原值" show-overflow-tooltip></el-table-column>
             <el-table-column align="center" prop="project" label="计划项目" show-overflow-tooltip></el-table-column>
-            <el-table-column align="center" prop="number" label="数量"></el-table-column>
+            <el-table-column align="center" prop="number" label="数量" show-overflow-tooltip></el-table-column>
             <el-table-column align="center" prop="comment" label="备注" show-overflow-tooltip></el-table-column>
             <el-table-column align="center" label="操作" width="200">
               <template slot-scope="scope">
@@ -102,6 +102,37 @@
               </el-form-item>
             </el-form>
           </el-dialog>
+          <el-dialog title="导入" :visible.sync="dialogImportVisible" :modal-append-to-body="false" :close-on-click-modal="false" class="dialog-import">
+              <el-upload class="uploadFile"
+                         drag
+                         action="http://localhost:8888/asset/importExcel"
+                         ref="upload"
+                         :on-remove="handleRemove"
+                         :before-upload="beforeUpload"
+                         :on-error="uploadFail"
+                         :on-success="uploadSuccess"
+                         :file-list="fileList"
+                         :auto-upload="false"
+                         align="center">
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                <div class="el-upload__tip" slot="tip">只能上传excel文件</div>
+              </el-upload>
+              <div :class="{'import-failure': importFlag === 2, 'hide-dialog': importFlag !==2}" >
+                <div class="failure-tips">
+                  <i class="el-icon-warning"></i>导入失败</div>
+                <div class="failure-reason">
+                  <h4>失败原因</h4>
+                  <ul>
+                  <li v-for="(error,index) in errorResults" :key="index">第{{error.rowIdx + 1}}行，错误：{{error.column}},{{error.value}},{{error.errorInfo}}</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="import-dialog-footer">
+                <el-button size="small" type="primary" @click="submitUpload" icon="el-icon-circle-check-outline">确认导入</el-button>
+                <el-button size="small" type="warning" @click="cancelUpload" icon="el-icon-circle-close-outline">取消</el-button>
+              </div>
+          </el-dialog>
         </div>
       </div>
 </template>
@@ -133,7 +164,14 @@ export default {
       pageSize: 10,
       total: 0,
       pageSizes: [10, 20, 50, 100],
-      multipleSelection: []
+      loading: true,
+      dialogImportVisible: false,
+      importFlag: 1,
+      fileList:[],
+      uploadFlag: 0,
+      errorResults: [],
+      multipleSelection: [],
+      exportData:[]
     }
   },
   created: function () {
@@ -143,6 +181,7 @@ export default {
     initTable: function () {
       let currentPage = this.pageIndex -1
       let size = this.pageSize
+      this.loading = false
       this.$http.get('http://localhost:8888/asset/getAll?page=' + currentPage + '&size=' + size)
         .then((response) => {
           if(response.body.code === 0) {
@@ -286,6 +325,112 @@ export default {
     pageIndexChange: function (pageIndex) {
       this.pageIndex = pageIndex
       this.initTable()
+    },
+    importData() {
+      this.importFlag = 1
+      this.fileList = []
+      this.dialogImportVisible = true
+    },
+    handleRemove(file, fileList) {
+      //文件移除
+    },
+    beforeUpload(file) {
+      //上传前配置
+      // this.importHeaders.cityCode='上海'//可以配置请求头
+      let excelfileExtend = ".xls,.xlsx, .csv"//设置文件格式
+      let fileExtend = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (excelfileExtend.indexOf(fileExtend) <= -1) {
+        this.$message.error('文件格式错误')
+        return false
+      }
+    },
+    uploadFail(err, file, fileList) {
+      this.$message.error(err)
+    },
+    //上传成功
+    uploadSuccess(response, file, fileList) {
+      if (response.status === -1) {
+        this.errorResults = response.data
+        if (this.errorResults) {
+          this.importFlag = 2
+        } else {
+          this.dialogImportVisible = false
+          this.$message.error(response.errorMsg)
+        }
+      } else {
+        this.importFlag = 3
+        this.dialogImportVisible = false
+        this.$message.info('导入成功')
+      }
+    },
+    /* 确认导入 */
+    submitUpload () {
+      if (this.uploadFlag === 0) {
+        this.alert('请先选择要上传的文件', {type : 'error'})
+      } else {
+        this.$refs.upload.submit()
+        this.uploadFlag = 0
+      }
+    },
+    // 取消上传
+    cancelUpload () {
+      this.dialogImportVisible = false
+      this.fileList = []
+    },
+    getDataToExport() {
+      let _this = this
+      let request = new XMLHttpRequest()
+      request.open('GET', 'http://localhost:8888/asset/getAll', false) // 第三个参数 false 代表设置同步请求
+      request.setRequestHeader('Accept', 'application/json');
+      request.setRequestHeader('Content-Type', 'application/json');
+      request.send(JSON.stringify({learningCompleted: this.learningCompleted, playbackTime: this.currentTime}))
+      if (request.status === 200) {
+        let response =JSON.parse(request.response)
+        if(response.code === 0) {
+          _this.exportData = response.data
+        } else {
+          _this.errorResults = response.message
+        }
+      } else {
+        _this.exportData = []
+      }
+    },
+    exportExcel() {
+      let _this = this
+      _this.getDataToExport()
+      require.ensure([], () => {
+        const {export_json_to_excel} = require('../assets/js/Export2Excel')
+        const tHeader = ['资产类别', '资产编号', '单位编号', '设备名称', '型号', '国别', '生产厂家', '出厂编号', '使用部门', '使用人', '资产原值', '计划项目', '数量', '备注']
+        const filterVal = ['assetType', 'assetCode', 'companyNumber', 'deviceName', 'model', 'country', 'manufacturer', 'factoryNumber', 'department', 'user', 'originalValue', 'project', 'number', 'comment']
+        if (_this.exportData.length !== 0) {
+          const data = _this.formatJson(filterVal, _this.exportData)
+          var time = _this.formatDate(new Date(), "yyyyMMddHHmmss")
+          export_json_to_excel(tHeader, data, '资产信息_' + time)
+          _this.exportData = []
+        } else {
+          _this.$alert(_this.errorResults.toString() ? null || '' : '表格数据为空', '导出失败', {type: 'error'})
+          _this.errorResults = []
+        }
+      })
+    },
+    formatJson(filterVal, jsonData) {
+      return jsonData.map(v => filterVal.map(j => v[j]))
+    },
+    formatDate(date, fmt) {
+      var o = {
+        "M+": date.getMonth() + 1, // 月份
+        "d+": date.getDate(), // 日
+        "H+": date.getHours(), // 小时
+        "m+": date.getMinutes(), // 分
+        "s+": date.getSeconds(), // 秒
+        "q+": Math.floor((date.getMonth() + 3) / 3), // 季度
+        "S": date.getMilliseconds() // 毫秒
+      };
+      if (/(y+)/.test(fmt))
+        fmt = fmt.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length))
+      for (var k in o)
+        if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)))
+      return fmt
     }
   }
 }
@@ -295,5 +440,14 @@ export default {
    .timeQuery{
      margin-bottom:20px;
    }
-
+   .hide-dialog{
+     display:none;
+   }
+  .uploadFile{
+    margin-bottom: 40px;
+  }
+  .import-dialog-footer{
+    margin-bottom: 20px;
+    text-align: center;
+  }
 </style>
