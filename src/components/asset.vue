@@ -111,8 +111,11 @@
                          :before-upload="beforeUpload"
                          :on-error="uploadFail"
                          :on-success="uploadSuccess"
+                         :on-change="handleChange"
                          :file-list="fileList"
                          :auto-upload="false"
+                         :limit="3"
+                         :on-exceed="handleExceed"
                          align="center">
                 <i class="el-icon-upload"></i>
                 <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
@@ -167,11 +170,10 @@ export default {
       loading: true,
       dialogImportVisible: false,
       importFlag: 1,
-      fileList:[],
       uploadFlag: 0,
+      fileList:[],
       errorResults: [],
-      multipleSelection: [],
-      exportData:[]
+      multipleSelection: []
     }
   },
   created: function () {
@@ -332,20 +334,27 @@ export default {
       this.dialogImportVisible = true
     },
     handleRemove(file, fileList) {
-      //文件移除
+    },
+    handleChange(file, fileList) {
+      this.fileList = fileList
     },
     beforeUpload(file) {
       //上传前配置
-      // this.importHeaders.cityCode='上海'//可以配置请求头
-      let excelfileExtend = ".xls,.xlsx, .csv"//设置文件格式
+      let excelfileExtend = ".xls,.xlsx"//设置文件格式
       let fileExtend = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
       if (excelfileExtend.indexOf(fileExtend) <= -1) {
-        this.$message.error('文件格式错误')
+        this.$message({
+          message: '文件格式错误',
+          type: 'error'
+        })
         return false
       }
     },
     uploadFail(err, file, fileList) {
-      this.$message.error(err)
+      this.$message({
+        message: err,
+        type: 'error'
+      })
     },
     //上传成功
     uploadSuccess(response, file, fileList) {
@@ -360,17 +369,26 @@ export default {
       } else {
         this.importFlag = 3
         this.dialogImportVisible = false
-        this.$message.info('导入成功')
+        this.initTable()
+        this.$message({
+          message: '导入成功!',
+          type: 'success'
+        })
       }
     },
     /* 确认导入 */
     submitUpload () {
-      if (this.uploadFlag === 0) {
-        this.alert('请先选择要上传的文件', {type : 'error'})
-      } else {
+      if (this.fileList.length > 0 ) {
         this.$refs.upload.submit()
-        this.uploadFlag = 0
+      } else {
+        this.$message({
+          message: '请选择要导入的Excel文件',
+          type: 'warning'
+        })
       }
+    },
+    handleExceed(files, fileList) {
+      this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
     },
     // 取消上传
     cancelUpload () {
