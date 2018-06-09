@@ -105,7 +105,7 @@
           <el-dialog title="导入" :visible.sync="dialogImportVisible" :modal-append-to-body="false" :close-on-click-modal="false" class="dialog-import">
               <el-upload class="uploadFile"
                          drag
-                         action="http://localhost:8888/asset/importExcel"
+                         action="/asset/importExcel"
                          ref="upload"
                          :on-remove="handleRemove"
                          :before-upload="beforeUpload"
@@ -184,7 +184,7 @@ export default {
       let currentPage = this.pageIndex -1
       let size = this.pageSize
       this.loading = false
-      this.$http.get('http://localhost:8888/asset/getAll?page=' + currentPage + '&size=' + size)
+      this.$http.get('/asset/getAll?page=' + currentPage + '&size=' + size)
         .then((response) => {
           if(response.body.code === 0) {
             this.assets = response.body.data.content
@@ -214,7 +214,7 @@ export default {
       const _this = this
       if (_this.isAdd) {
         let asset = _this.asset
-        _this.$http.post('http://localhost:8888/asset/saveAsset',{
+        _this.$http.post('/asset/saveAsset',{
           'assetType': asset.assetType,
           'assetCode': asset.assetCode,
           'companyNumber': asset.companyNumber,
@@ -249,7 +249,7 @@ export default {
         // bus.$emit("manifestChanged");
       } else {
         let asset = this.asset
-        _this.$http.put('http://localhost:8888/asset/updateAsset',
+        _this.$http.put('/asset/updateAsset',
           {
             'id': asset.id,
             'assetType': asset.assetType,
@@ -300,7 +300,7 @@ export default {
     del: function (id) {
       this.$confirm('是否删除？', '警告', { type: 'warning' })
         .then(() => {
-          this.$http.delete('http://localhost:8888/asset/deleteAsset/' + id)
+          this.$http.delete('/asset/deleteAsset/' + id)
             .then(response => {
               if (response.body.code === 0) {
                 this.initTable()
@@ -398,7 +398,7 @@ export default {
     getDataToExport() {
       let _this = this
       let request = new XMLHttpRequest()
-      request.open('GET', 'http://localhost:8888/asset/getAll', false) // 第三个参数 false 代表设置同步请求
+      request.open('GET', '/asset/getAll', false) // 第三个参数 false 代表设置同步请求
       request.setRequestHeader('Accept', 'application/json');
       request.setRequestHeader('Content-Type', 'application/json');
       request.send(JSON.stringify({learningCompleted: this.learningCompleted, playbackTime: this.currentTime}))

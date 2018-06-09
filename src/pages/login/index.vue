@@ -1,13 +1,75 @@
 <template>
-  <div id="app">
-    <img src="../../assets/logo.png">
-    <router-view/>
+  <div class="login_box">
+    <div class="login_l_img"><img src="../../assets/images/login-img.png" /></div>
+    <div class="login">
+      <div class="login_logo"><a href="#"><img src="../../assets/images/login_logo.png" /></a></div>
+      <div class="login_name">
+        <p>固定资产管理系统</p>
+      </div>
+      <el-form>
+        <el-input v-model="username" placeholder="用户名"></el-input>
+        <el-input v-model="password" type="password" placeholder="密码"></el-input>
+        <el-form-item style="padding-top: 12px;">
+          <el-button style="width:45%;background-color: #21a0c4;color:#fff" @click="handleSubmit" :loading="loading">登录</el-button>
+          <el-button style="width:45%;background-color: #fff;color: #000;float:right" @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+    <div class="copyright">caojy 版权所有©2018-2019 技术支持电话：15970481474</div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'App'
+  /* eslint-disable */
+  name: 'App',
+  data: function () {
+    return {
+      username: '',
+      password: '',
+      loading: false,
+    }
+  },
+  methods: {
+    handleReset () {
+      this.username = ''
+      this.password = ''
+    },
+    handleSubmit () {
+      this.loading = true
+      let username = encodeURIComponent(this.username)
+      let password = encodeURIComponent(this.password)
+      this.$http.post('/login?username=' + username + '&password=' + password)
+        .then((response) => {
+          //  登录失败时，提示失败原因；成功则转向/admin.html页面
+          if (response.data !== null && response.data.code === 0) {
+            if (response.data.user !== null) {
+              sessionStorage.setItem('username', response.data.username)
+            }
+            window.location.href = '/main.html'
+          } else if (response.data !== null && response.data.code === -1) {
+            this.loading = false
+            this.$message({
+              message: response.data.message,
+              type: 'error'
+            })
+          } else {
+            this.loading = false
+            this.$message({
+              message: response.data.message,
+              type: 'error'
+            })
+          }
+        })
+        .catch(() => {
+          this.$message({
+            message: '网络连接错误！',
+            type: 'error'
+          })
+          this.loading = false
+        })
+    }
+  }
 }
 </script>
 
