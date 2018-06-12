@@ -1,6 +1,6 @@
 <template>
     <div>
-       <h5>学习vue与element-ui</h5>
+       <h5>首页</h5>
     </div>
 </template>
 

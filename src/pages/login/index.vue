@@ -8,9 +8,9 @@
       </div>
       <el-form>
         <el-input v-model="username" placeholder="用户名"></el-input>
-        <el-input v-model="password" type="password" placeholder="密码"></el-input>
+        <el-input v-model="password" type="password" placeholder="密码" @keyup.enter.native="handleSubmit"></el-input>
         <el-form-item style="padding-top: 12px;">
-          <el-button style="width:45%;background-color: #21a0c4;color:#fff" @click="handleSubmit" :loading="loading">登录</el-button>
+          <el-button style="width:45%;background-color: #21a0c4;color:#fff" @click="handleSubmit" type="submit" :loading="loading">登录</el-button>
           <el-button style="width:45%;background-color: #fff;color: #000;float:right" @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
@@ -37,15 +37,21 @@ export default {
     },
     handleSubmit () {
       this.loading = true
+      if (this.username === '' || this.password === '') {
+        this.$message({
+          message: '请输入用户名或密码',
+          type: 'warning'
+        })
+        this.loading = false
+        return
+      }
       let username = encodeURIComponent(this.username)
       let password = encodeURIComponent(this.password)
       this.$http.post('/login?username=' + username + '&password=' + password)
         .then((response) => {
           //  登录失败时，提示失败原因；成功则转向/admin.html页面
           if (response.data !== null && response.data.code === 0) {
-            if (response.data.user !== null) {
-              sessionStorage.setItem('username', response.data.username)
-            }
+            sessionStorage.setItem('username', this.username)
             window.location.href = '/main.html'
           } else if (response.data !== null && response.data.code === -1) {
             this.loading = false

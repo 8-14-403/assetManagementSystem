@@ -1,19 +1,23 @@
 <template>
       <div>
-        <div class="timeQuery">
-          开始日期：
-          <el-date-picker v-model="start" type="date" placeholder="选择日期"></el-date-picker>
-          结束日期：
-          <el-date-picker v-model="end" type="date" placeholder="选择日期"></el-date-picker>
-          <el-button type="primary" size="small" v-on:click="fetchData" icon="search">查  询</el-button>
-          <el-button type="primary" size="small" v-on:click="add" icon="plus">添  加</el-button>
+        <div class="query" style="padding-top:30px;padding-bottom: 30px;text-align: center;">
+          <el-input type="text" style="width:600px;box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 8px;" v-bind:placeholder="searchPlaceholder" v-model="searchInput"  @keyup.enter.native="search" @change="initTable">
+            <el-button style="height:40px; color: #fff;background-color: #409EFF;border-color: #409EFF;border-radius: 0 4px 4px 0; box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 8px;"
+                       slot="append" icon="el-icon-search"
+                       type="primary"
+                       @click="search">查询</el-button>
+          </el-input>
         </div>
-        <div class="table">
-          <div align="right" style="line-height: 50px">
-            <el-button type="primary" size="small" v-on:click="importData" icon="el-icon-upload2">导入</el-button>
-            <el-button type="primary" size="small" v-on:click="exportExcel" icon="el-icon-download">导出</el-button>
+        <div class="table" style="padding-top: 30px;">
+          <div align="left">
+            <el-button-group style="width: 320px">
+              <el-button type="primary" size="small" v-on:click="add" icon="el-icon-plus">添加</el-button>
+              <el-button type="primary" size="small" v-on:click="importData" icon="el-icon-upload2">导入</el-button>
+              <el-button type="primary" size="small" v-on:click="exportExcel" icon="el-icon-download">导出</el-button>
+              <el-button type="danger" size="small" v-on:click="delInBatch" icon="el-icon-delete">批量删除</el-button>
+            </el-button-group>
           </div>
-          <el-table v-bind:data="assets" highlight-current-row stripe v-loading="loading" height="500" style="width: 100%" @selection-change="handleSelectionChange">
+          <el-table v-bind:data="assets" highlight-current-row stripe v-loading="loading" max-height="650px" style="overflow: auto ;width: 100%" @selection-change="handleSelectionChange">
             <el-table-column type="selection" width="40"></el-table-column>
             <el-table-column prop="index" align="center" label="序号" type="index" width="60"></el-table-column>
             <el-table-column prop="id" label="ID" v-if=false></el-table-column>
@@ -121,16 +125,6 @@
                 <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
                 <div class="el-upload__tip" slot="tip">只能上传excel文件</div>
               </el-upload>
-              <div :class="{'import-failure': importFlag === 2, 'hide-dialog': importFlag !==2}" >
-                <div class="failure-tips">
-                  <i class="el-icon-warning"></i>导入失败</div>
-                <div class="failure-reason">
-                  <h4>失败原因</h4>
-                  <ul>
-                  <li v-for="(error,index) in errorResults" :key="index">第{{error.rowIdx + 1}}行，错误：{{error.column}},{{error.value}},{{error.errorInfo}}</li>
-                  </ul>
-                </div>
-              </div>
               <div class="import-dialog-footer">
                 <el-button size="small" type="primary" @click="submitUpload" icon="el-icon-circle-check-outline">确认导入</el-button>
                 <el-button size="small" type="warning" @click="cancelUpload" icon="el-icon-circle-close-outline">取消</el-button>
@@ -145,17 +139,10 @@ export default {
   /* eslint-disable */
   name: '',
   data: function () {
-    let currentDate = new Date()
-    let costValidator = (rule, value, callback) => {
-      if (!/^[0-9]+(.[0-9]{2})?$/.test(value)) {
-        callback(new Error('请输入合法金额'))
-      } else {
-        callback()
-      }
-    }
     return {
-      start: new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1),
-      end: new Date(),
+      searchPlaceholder: '资产类别/资产编号/设备名称',
+      searchInput: '',
+      isSearch: false,
       assets: [],
       title: '',
       asset: {},
@@ -169,7 +156,6 @@ export default {
       pageSizes: [10, 20, 50, 100],
       loading: true,
       dialogImportVisible: false,
-      importFlag: 1,
       uploadFlag: 0,
       fileList:[],
       errorResults: [],
@@ -180,27 +166,46 @@ export default {
     this.initTable()
   },
   methods: {
+    search: function () {
+      this.initTable()
+    },
     initTable: function () {
-      let currentPage = this.pageIndex -1
       let size = this.pageSize
       this.loading = false
-      this.$http.get('/asset/getAll?page=' + currentPage + '&size=' + size)
-        .then((response) => {
-          if(response.body.code === 0) {
-            this.assets = response.body.data.content
-            this.total = response.body.data.totalElements
-          } else {
-            this.$alert(response.body.message, '获取资产信息失败', { type: 'error'})
-          }
-        })
-        .catch((response) => {
-          this.$alert(response.message, '请求失败', {type : 'error'})
-        })
+      if (this.searchInput !== '') {
+        this.pageIndex = 1
+        let currentPage = 0
+        let condition = encodeURIComponent(this.searchInput)
+        this.$http.get('/asset/getByCondition?condition=' + condition + '&page=' + currentPage + '&size=' + size)
+          .then((response) => {
+            if(response.body.code === 0) {
+              this.assets = response.body.data.content
+              this.total = response.body.data.totalElements
+            } else {
+              this.$alert(response.body.message, '获取资产信息失败', { type: 'error'})
+            }
+          })
+          .catch((response) => {
+            this.$alert(response.message, '请求失败', {type : 'error'})
+          })
+      } else {
+        let currentPage = this.pageIndex -1
+        this.$http.get('/asset/getAll?page=' + currentPage + '&size=' + size)
+          .then((response) => {
+            if (response.body.code === 0) {
+              this.assets = response.body.data.content
+              this.total = response.body.data.totalElements
+            } else {
+              this.$alert(response.body.message, '获取资产信息失败', {type: 'error'})
+            }
+          })
+          .catch((response) => {
+            this.$alert(response.message, '请求失败', {type: 'error'})
+          })
+      }
     },
     handleSelectionChange (val) {
       this.multipleSelection = val
-    },
-    fetchData: function () {
     },
     add: function () {
       this.title = '添加资产信息'
@@ -317,6 +322,41 @@ export default {
             })
         })
     },
+    delInBatch: function () {
+      let data = this.multipleSelection
+      let jsonData = JSON.stringify(data)
+      if (data.length === 0 ) {
+        this.$message({
+          message: '请选择要删除的项！',
+          type: 'error'
+        })
+      } else {
+        this.$confirm('是否删除？', '警告', { type: 'warning' })
+          .then(() => {
+            this.$http.delete('/asset/deleteAssets', {
+              body: jsonData,
+              headers: {
+                'Content-type': 'application/json'
+              }
+            })
+              .then(response => {
+                if (response.body.code === 0) {
+                  this.initTable()
+                  this.$message({
+                    message: '删除成功!',
+                    type: 'success'
+                  })
+                } else {
+                  this.$alert(response.body.message, '删除失败', { type: 'error' })
+                }
+              })
+              .catch((response) => {
+                this.$alert(response.message, '请求失败', { type: 'error' })
+              })
+          })
+      }
+
+    },
     dialogClosed: function () {
       this.$refs.assetForm.resetFields()
     },
@@ -358,16 +398,10 @@ export default {
     },
     //上传成功
     uploadSuccess(response, file, fileList) {
-      if (response.status === -1) {
-        this.errorResults = response.data
-        if (this.errorResults) {
-          this.importFlag = 2
-        } else {
-          this.dialogImportVisible = false
-          this.$message.error(response.errorMsg)
-        }
+      if (response.code !== 0) {
+        this.dialogImportVisible = false
+        this.$message.error(response.message)
       } else {
-        this.importFlag = 3
         this.dialogImportVisible = false
         this.initTable()
         this.$message({
@@ -455,12 +489,6 @@ export default {
 </script>
 
 <style scoped>
-   .timeQuery{
-     margin-bottom:20px;
-   }
-   .hide-dialog{
-     display:none;
-   }
   .uploadFile{
     margin-bottom: 40px;
   }

@@ -9,5 +9,12 @@
     <div id="app"></div>
     <!-- built files will be auto injected -->
   </body>
+  <script language="JavaScript">
+    // 登录到主页面后禁止回退
+    history.pushState(null, null, document.URL);
+    window.addEventListener('popstate', function () {
+      history.pushState(null, null, document.URL);
+    });
+  </script>
 </html>
-s
+
