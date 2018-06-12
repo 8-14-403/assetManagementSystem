@@ -6,7 +6,7 @@ import router from '../../router'
 import ElementUi from 'element-ui'
 import VueResource from 'vue-resource'
 import 'element-ui/lib/theme-chalk/index.css'
-import '../../assets/css/login.css'
+import '../../../static/css/login.css'
 
 Vue.config.productionTip = false
 Vue.use(ElementUi)

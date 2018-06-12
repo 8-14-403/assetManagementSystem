@@ -451,7 +451,7 @@ export default {
       let _this = this
       _this.getDataToExport()
       require.ensure([], () => {
-        const {export_json_to_excel} = require('../assets/js/Export2Excel')
+        const {export_json_to_excel} = require('../../static/js/Export2Excel')
         const tHeader = ['资产类别', '资产编号', '单位编号', '设备名称', '型号', '国别', '生产厂家', '出厂编号', '使用部门', '使用人', '资产原值', '计划项目', '数量', '备注']
         const filterVal = ['assetType', 'assetCode', 'companyNumber', 'deviceName', 'model', 'country', 'manufacturer', 'factoryNumber', 'department', 'user', 'originalValue', 'project', 'number', 'comment']
         if (_this.exportData.length !== 0) {

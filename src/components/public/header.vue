@@ -4,7 +4,7 @@
       <div class="userimgbox">
         <el-dropdown @command="handleCommand" style="color: #fff; margin-right: 40px;">
           <span class="el-dropdown-link">
-            <img class="userimg" src="../../assets/images/login_logo.png">
+            <img class="userimg" src="../../../static/images/login_logo.png">
             {{ username }}
           </span>
           <el-dropdown-menu slot="dropdown">

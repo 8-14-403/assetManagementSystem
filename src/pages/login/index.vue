@@ -1,8 +1,8 @@
 <template>
   <div class="login_box">
-    <div class="login_l_img"><img src="../../assets/images/login-img.png" /></div>
+    <div class="login_l_img"><img src="../../../static/images/login-background.png" /></div>
     <div class="login">
-      <div class="login_logo"><a href="#"><img src="../../assets/images/login_logo.png" /></a></div>
+      <div class="login_logo"><a href="#"><img src="../../../static/images/login_logo.png" /></a></div>
       <div class="login_name">
         <p>固定资产管理系统</p>
       </div>
